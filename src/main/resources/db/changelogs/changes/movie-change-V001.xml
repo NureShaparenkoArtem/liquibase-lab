@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- MOVIE SERVICE | Author: shaparenko | Branch: movie_service-denorm -->
+
+    <changeSet id="201-add-avg_rating-to-movie" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="movie"/>
+                <not>
+                    <columnExists tableName="movie" columnName="avg_rating"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="movie">
+            <column name="avg_rating" type="DECIMAL(3,1)" defaultValue="0.0"
+                    remarks="Denormalized average rating, updated by trigger"/>
+        </addColumn>
+
+        <sql>
+            UPDATE tables
+            SET version = 2,
+                column_count = (SELECT COUNT(*) FROM information_schema.columns
+                                  WHERE table_schema = 'public' AND table_name = 'movie'),
+                last_update_at = NOW()
+            WHERE name = 'movie';
+        </sql>
+
+        <rollback>
+            <dropColumn tableName="movie" columnName="avg_rating"/>
+            <sql>
+                UPDATE tables
+                SET version = 1, column_count = column_count - 1, last_update_at = NOW()
+                WHERE name = 'movie';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
