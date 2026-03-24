@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- MOVIE SERVICE | Author: shaparenko | Branch: movie_service-feature -->
+
+    <changeSet id="004-create-movie-table" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <tableExists tableName="genre"/>
+        </preConditions>
+
+        <createTable tableName="movie">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(300)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="genre_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_min" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="age_rating" type="VARCHAR(10)" defaultValue="0+"
+                    remarks="Age restriction: 0+, 6+, 12+, 16+, 18+"/>
+            <column name="release_year" type="INT"/>
+            <column name="description" type="VARCHAR(1000)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="movie" baseColumnNames="genre_id"
+                referencedTableName="genre" referencedColumnNames="id"
+                constraintName="fk_movie_genre"/>
+
+        <sql>CREATE INDEX idx_movie_genre_id ON movie(genre_id);</sql>
+        <sql>CREATE INDEX idx_movie_title ON movie(title);</sql>
+
+        <sql>
+            INSERT INTO tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES ('liquibase_lab', 'movie', 'DATA_TABLE', 'shaparenko', 1, 'movie_service',
+                    'Movies available in the cinema',
+                    (SELECT COUNT(*) FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'movie'),
+                    NOW(), NULL);
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM tables WHERE name = 'movie';</sql>
+            <dropTable tableName="movie"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
