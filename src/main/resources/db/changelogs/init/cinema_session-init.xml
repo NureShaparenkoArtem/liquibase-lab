@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- SESSION SERVICE | Author: shaparenko | Branch: session_service-feature -->
+
+    <changeSet id="006-create-cinema_session-table" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="movie"/>
+                <tableExists tableName="hall"/>
+            </and>
+        </preConditions>
+
+        <createTable tableName="cinema_session">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="movie_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hall_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="DECIMAL(8,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seats_available" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="cinema_session" baseColumnNames="movie_id"
+                referencedTableName="movie" referencedColumnNames="id"
+                constraintName="fk_cinema_session_movie"/>
+
+        <addForeignKeyConstraint
+                baseTableName="cinema_session" baseColumnNames="hall_id"
+                referencedTableName="hall" referencedColumnNames="id"
+                constraintName="fk_cinema_session_hall"/>
+
+        <sql>CREATE INDEX idx_cinema_session_movie_id ON cinema_session(movie_id);</sql>
+        <sql>CREATE INDEX idx_cinema_session_start_time ON cinema_session(start_time);</sql>
+
+        <sql>
+            INSERT INTO tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES ('liquibase_lab', 'cinema_session', 'DATA_TABLE', 'shaparenko', 1, 'session_service',
+                    'Scheduled cinema sessions (movie + hall + time)',
+                    (SELECT COUNT(*) FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'cinema_session'),
+                    NOW(), NULL);
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM tables WHERE name = 'cinema_session';</sql>
+            <dropTable tableName="cinema_session"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
