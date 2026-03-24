@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- SYSTEM -->
+    <include file="src/main/resources/db/changelogs/init/tables-init.xml"/>
+
+    <!-- USER SERVICE -->
+    <include file="src/main/resources/db/changelogs/init/role-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/app_user-init.xml"/>
+
+    <!-- MOVIE SERVICE -->
+    <include file="src/main/resources/db/changelogs/init/genre-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/movie-init.xml"/>
+
+    <!-- SESSION SERVICE -->
+    <include file="src/main/resources/db/changelogs/init/hall-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/cinema_session-init.xml"/>
+
+    <!-- TICKET SERVICE -->
+    <include file="src/main/resources/db/changelogs/init/ticket-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/payment-init.xml"/>
+
+    <!-- DATA -->
+    <include file="src/main/resources/db/changelogs/data/role-data-V001.xml"/>
+    <include file="src/main/resources/db/changelogs/data/genre-data-V001.xml"/>
+
+    <!-- CHANGES -->
+     <include file="src/main/resources/db/changelogs/changes/movie-change-V001.xml"/>
+     <include file="src/main/resources/db/changelogs/changes/cinema_session-change-V001.xml"/>
+
+    <!-- TRIGGERS -->
+     <include file="src/main/resources/db/changelogs/triggers/ticket_count-trigger.xml"/>
+
+    <!-- DROP -->
+     <include file="src/main/resources/db/changelogs/changes/payment-drop-V001.xml"/>
+
+</databaseChangeLog>
