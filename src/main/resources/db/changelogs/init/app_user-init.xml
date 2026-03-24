@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- USER SERVICE | Author: shaparenko | Branch: user_service-feature -->
+
+    <changeSet id="002-create-app_user-table" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <tableExists tableName="role"/>
+        </preConditions>
+
+        <createTable tableName="app_user">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="full_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="app_user" baseColumnNames="role_id"
+                referencedTableName="role" referencedColumnNames="id"
+                constraintName="fk_app_user_role"/>
+
+        <sql>CREATE INDEX idx_app_user_email ON app_user(email);</sql>
+
+        <sql>
+            INSERT INTO tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES ('liquibase_lab', 'app_user', 'DATA_TABLE', 'shaparenko', 1, 'user_service',
+                    'Cinema system users (admins, cashiers, viewers)',
+                    (SELECT COUNT(*) FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'app_user'),
+                    NOW(), NULL);
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM tables WHERE name = 'app_user';</sql>
+            <dropTable tableName="app_user"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
