@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- TICKET SERVICE | Author: shaparenko | Branch: ticket_service-feature -->
+
+    <changeSet id="007-create-ticket-table" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="cinema_session"/>
+                <tableExists tableName="app_user"/>
+            </and>
+        </preConditions>
+
+        <createTable tableName="ticket">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="session_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seat_number" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_paid" type="DECIMAL(8,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="RESERVED"
+                    remarks="RESERVED, PAID, CANCELLED"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="ticket" baseColumnNames="session_id"
+                referencedTableName="cinema_session" referencedColumnNames="id"
+                constraintName="fk_ticket_session"/>
+
+        <addForeignKeyConstraint
+                baseTableName="ticket" baseColumnNames="user_id"
+                referencedTableName="app_user" referencedColumnNames="id"
+                constraintName="fk_ticket_user"/>
+
+        <sql>CREATE UNIQUE INDEX uq_ticket_session_seat ON ticket(session_id, seat_number);</sql>
+        <sql>CREATE INDEX idx_ticket_user_id ON ticket(user_id);</sql>
+
+        <sql>
+            INSERT INTO tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES ('liquibase_lab', 'ticket', 'DATA_TABLE', 'shaparenko', 1, 'ticket_service',
+                    'Cinema tickets linking users to sessions',
+                    (SELECT COUNT(*) FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'ticket'),
+                    NOW(), NULL);
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM tables WHERE name = 'ticket';</sql>
+            <dropTable tableName="ticket"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
