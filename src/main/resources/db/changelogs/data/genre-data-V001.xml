@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- MOVIE SERVICE | Author: shaparenko | Branch: movie_service-data -->
+
+    <changeSet id="102-insert-genre-data" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="genre"/>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM genre WHERE name = 'Action'
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <sql>
+            INSERT INTO genre (name, description) VALUES
+            ('Action', 'High-energy films with stunts and fights'),
+            ('Comedy', 'Humorous and lighthearted films'),
+            ('Drama', 'Character-driven emotional stories'),
+            ('Horror', 'Films designed to frighten'),
+            ('Sci-Fi', 'Science fiction and futuristic themes'),
+            ('Animated', 'Animation for all ages');
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM genre WHERE name IN ('Action','Comedy','Drama','Horror','Sci-Fi','Animated');</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
