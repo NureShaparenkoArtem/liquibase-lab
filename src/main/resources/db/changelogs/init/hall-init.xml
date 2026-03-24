@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- SESSION SERVICE | Author: shaparenko | Branch: session_service-feature -->
+
+    <changeSet id="005-create-hall-table" author="shaparenko">
+        <createTable tableName="hall">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="total_seats" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="has_3d" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_imax" type="BOOLEAN" defaultValueBoolean="false"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_hall_name ON hall(name);</sql>
+
+        <sql>
+            INSERT INTO tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES ('liquibase_lab', 'hall', 'DATA_TABLE', 'shaparenko', 1, 'session_service',
+                    'Cinema halls with seating capacity',
+                    (SELECT COUNT(*) FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'hall'),
+                    NOW(), NULL);
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM tables WHERE name = 'hall';</sql>
+            <dropTable tableName="hall"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
