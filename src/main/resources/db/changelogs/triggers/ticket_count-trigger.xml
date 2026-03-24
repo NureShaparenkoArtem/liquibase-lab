@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- SESSION SERVICE | Author: shaparenko | Branch: session_service-denorm -->
+
+    <changeSet id="301-create-fn_update_tickets_sold" author="shaparenko" runOnChange="false">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="ticket"/>
+                <tableExists tableName="cinema_session"/>
+                <columnExists tableName="cinema_session" columnName="tickets_sold"/>
+            </and>
+        </preConditions>
+
+        <sql splitStatements="false">
+            CREATE OR REPLACE FUNCTION fn_update_tickets_sold()
+            RETURNS TRIGGER AS $$
+            DECLARE
+                affected_session_id BIGINT;
+            BEGIN
+                IF TG_OP = 'DELETE' THEN
+                    affected_session_id := OLD.session_id;
+                ELSE
+                    affected_session_id := NEW.session_id;
+                END IF;
+
+                UPDATE cinema_session
+                SET tickets_sold    = (
+                        SELECT COUNT(*) FROM ticket
+                        WHERE session_id = affected_session_id
+                          AND status != 'CANCELLED'
+                    ),
+                    seats_available = total_seats - (
+                        SELECT COUNT(*) FROM ticket
+                        WHERE session_id = affected_session_id
+                          AND status != 'CANCELLED'
+                    )
+                FROM hall
+                WHERE cinema_session.id      = affected_session_id
+                  AND cinema_session.hall_id = hall.id;
+
+                RETURN NULL;
+            END;
+            $$ LANGUAGE plpgsql;
+        </sql>
+
+        <rollback>
+            <sql>DROP FUNCTION IF EXISTS fn_update_tickets_sold();</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="302-create-trg_ticket_count" author="shaparenko" runOnChange="false">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="ticket"/>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM pg_trigger WHERE tgname = 'trg_ticket_count'
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <sql splitStatements="false">
+            CREATE TRIGGER trg_ticket_count
+            AFTER INSERT OR DELETE ON ticket
+            FOR EACH ROW
+            EXECUTE FUNCTION fn_update_tickets_sold();
+        </sql>
+
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS trg_ticket_count ON ticket;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

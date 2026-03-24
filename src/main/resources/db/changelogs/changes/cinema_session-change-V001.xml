@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!-- SESSION SERVICE | Author: shaparenko | Branch: session_service-denorm -->
+
+    <changeSet id="202-add-tickets_sold-to-cinema_session" author="shaparenko">
+
+        <preConditions onFail="HALT">
+            <and>
+                <tableExists tableName="cinema_session"/>
+                <not>
+                    <columnExists tableName="cinema_session" columnName="tickets_sold"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="cinema_session">
+            <column name="tickets_sold" type="INT" defaultValue="0"
+                    remarks="Denormalized count, kept in sync by trigger"/>
+        </addColumn>
+
+        <sql>
+            UPDATE tables
+            SET version = 2,
+                column_count = (SELECT COUNT(*) FROM information_schema.columns
+                                  WHERE table_schema = 'public' AND table_name = 'cinema_session'),
+                last_update_at = NOW()
+            WHERE name = 'cinema_session';
+        </sql>
+
+        <rollback>
+            <dropColumn tableName="cinema_session" columnName="tickets_sold"/>
+            <sql>
+                UPDATE tables
+                SET version = 1, column_count = column_count - 1, last_update_at = NOW()
+                WHERE name = 'cinema_session';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
